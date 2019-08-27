@@ -50,8 +50,8 @@ setup(
     keywords=['DTN-RM', 'system', 'monitor', 'SDN', 'end-to-end'],
     package_dir={'': 'src/python/'},
     packages=['DTNRMAgent'] + list_packages(['src/python/DTNRMAgent/']),
-    install_requires=['importlib==1.0.4', 'psutil==5.2.2', 'potsdb', 'ipaddress', 'setuptools>39.1.0'],
+    install_requires=['importlib==1.0.4', 'psutil==5.2.2', 'potsdb', 'ipaddress', 'setuptools>39.1.0', 'pyroute2'],
     data_files=[("/etc/dtnrm/", CONFIG_LOCATION)],
     py_modules=get_py_modules(['src/python/DTNRMAgent']),
-    scripts=["packaging/dtnrm-site-agent/centos7/dtnrmagent-update", "packaging/dtnrm-site-agent/centos7/dtnrm-ruler"]
+    scripts=["packaging/dtnrm-site-agent/dtnrmagent-update", "packaging/dtnrm-site-agent/dtnrm-ruler"]
 )

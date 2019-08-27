@@ -21,6 +21,7 @@ Date			: 2017/09/26
 import ipaddress
 import pprint
 import psutil
+from pyroute2 import IPRoute
 from DTNRMAgent.RecurringActions.Utilities import externalCommand
 from DTNRMLibs.MainUtilities import getConfig
 
@@ -125,14 +126,29 @@ def get(config):
                 txQueueLen = externalCommand('cat /sys/class/net/' + nic + "/tx_queue_len")
                 familyInfo["txqueuelen"] = txQueueLen[0].strip()
     # Check in the end which interfaces where defined in config but not available...
-    outputForFE = {}
+    outputForFE = {"interfaces": {}, "routes": []}
     for intfName, intfDict in netInfo.iteritems():
         if intfName.split('.')[0] not in foundInterfaces:
             print 'This interface was defined in configuration, but not available. Will not add it to final output'
             print intfName, intfDict
         else:
-            outputForFE[intfName] = intfDict
+            outputForFE["interfaces"][intfName] = intfDict
+    # Get Routing Information
+    outputForFE["routes"] = getRoutes(config)
     return outputForFE
+
+def getRoutes(config):
+    # Get Routing Information
+    routes = []
+    with IPRoute() as ipr:
+        for route in ipr.get_routes(table=254, family=2):
+            newroute = {"dst_len": route['dst_len']}
+            for item in route['attrs']:
+                if item[0] in ['RTA_GATEWAY', 'RTA_DST', 'RTA_PREFSRC']:
+                    newroute[item[0]] = item[1]
+            routes.append(newroute)
+    print routes
+    return routes
 
 def getVlanCount(config):
     """ Custom function to get vlanCount """
