@@ -28,10 +28,10 @@ from setupUtilities import createAllDirsFromConfig
 
 CONFIG = None
 CONFIG_LOCATION = []
-if os.path.isfile('/etc/dtnrmagent.conf'):
-    CONFIG_LOCATION.append('/etc/dtnrmagent.conf')
+if os.path.isfile('/etc/dtnrm/main.conf'):
+    CONFIG_LOCATION.append('/etc/dtnrm/main.conf')
 else:
-    CONFIG_LOCATION.append('packaging/dtnrm-site-agent/dtnrmagent.conf')
+    CONFIG_LOCATION.append('packaging/dtnrm-site-agent/main.conf')
 
 CONFIG = getConfig(CONFIG_LOCATION)
 MAINDIR = CONFIG.get('general', 'private_dir')
@@ -50,8 +50,8 @@ setup(
     keywords=['DTN-RM', 'system', 'monitor', 'SDN', 'end-to-end'],
     package_dir={'': 'src/python/'},
     packages=['DTNRMAgent'] + list_packages(['src/python/DTNRMAgent/']),
-    install_requires=['importlib==1.0.4', 'psutil==5.2.2', 'potsdb', 'ipaddress', 'setuptools>39.1.0'],
-    data_files=[("/etc/", CONFIG_LOCATION)],
+    install_requires=['importlib==1.0.4', 'psutil==5.2.2', 'potsdb', 'ipaddress', 'setuptools>39.1.0', 'pyroute2'],
+    data_files=[("/etc/dtnrm/", CONFIG_LOCATION)],
     py_modules=get_py_modules(['src/python/DTNRMAgent']),
-    scripts=["packaging/dtnrm-site-agent/centos7/dtnrmagent-update", "packaging/dtnrm-site-agent/centos7/dtnrm-ruler"]
+    scripts=["packaging/dtnrm-site-agent/dtnrmagent-update", "packaging/dtnrm-site-agent/dtnrm-ruler"]
 )

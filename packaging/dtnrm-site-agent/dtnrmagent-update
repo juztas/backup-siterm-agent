@@ -32,7 +32,7 @@ class MyDaemon(Daemon):
 if __name__ == "__main__":
     DAEMON = None
     if len(sys.argv) == 3:
-        CONFIG, LOGGER = getDefaultConfigAgent('agent', confloc='/etc/dtnrmagent-%s.conf' % str(sys.argv[2]))
+        CONFIG, LOGGER = getDefaultConfigAgent('agent', confloc='/etc/dtnrm/main-%s.conf' % str(sys.argv[2]))
         DAEMON = MyDaemon('/tmp/dtnrmagent-update-%s.pid' % str(sys.argv[2]))
     else:
         DAEMON = MyDaemon('/tmp/dtnrmagent-update.pid')
@@ -40,3 +40,4 @@ if __name__ == "__main__":
         DAEMON.command(sys.argv[1], sys.argv[0])
     else:
         DAEMON.command('', sys.argv[0])
+
