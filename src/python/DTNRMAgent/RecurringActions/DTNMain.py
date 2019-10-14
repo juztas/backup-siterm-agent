@@ -26,6 +26,7 @@ import Plugins
 from DTNRMLibs.MainUtilities import publishToSiteFE, createDirs
 from DTNRMLibs.MainUtilities import getDefaultConfigAgent, getFullUrl
 from DTNRMLibs.MainUtilities import contentDB
+from DTNRMLibs.MainUtilities import getUTCnow
 
 COMPONENT = 'RecurringAction'
 
@@ -76,8 +77,8 @@ def appendConfig(config, dic):
     """Append to dic values from config and also dates"""
     dic['hostname'] = config.get('agent', 'hostname')
     dic['ip'] = config.get('general', 'ip')
-    dic['insertTime'] = int(time.time())
-    dic['updateTime'] = int(time.time())
+    dic['insertTime'] = getUTCnow()
+    dic['updateTime'] = getUTCnow()
     return dic
 
 
