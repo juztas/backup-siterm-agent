@@ -21,10 +21,15 @@ Email 			: justas.balcas (at) cern.ch
 Date			: 2017/09/26
 """
 import os
+import sys
 from setuptools import setup
 from setupUtilities import list_packages, get_py_modules
 from setupUtilities import getConfig, createDirs
 from setupUtilities import createAllDirsFromConfig
+
+BASEPATH = '/etc/'
+if "--user" in sys.argv:
+    BASEPATH = 'etc/'
 
 CONFIG = None
 CONFIG_LOCATION = []
@@ -50,8 +55,8 @@ setup(
     keywords=['DTN-RM', 'system', 'monitor', 'SDN', 'end-to-end'],
     package_dir={'': 'src/python/'},
     packages=['DTNRMAgent'] + list_packages(['src/python/DTNRMAgent/']),
-    install_requires=['importlib==1.0.4', 'psutil==5.2.2', 'potsdb', 'ipaddress', 'setuptools>39.1.0', 'pyroute2'],
-    data_files=[("/etc/dtnrm/", CONFIG_LOCATION)],
+    install_requires=['importlib==1.0.4', 'psutil==5.2.2', 'potsdb', 'ipaddress', 'pyroute2'],
+    data_files=[("%s/dtnrm/" % BASEPATH, CONFIG_LOCATION)],
     py_modules=get_py_modules(['src/python/DTNRMAgent']),
     scripts=["packaging/dtnrm-site-agent/dtnrmagent-update", "packaging/dtnrm-site-agent/dtnrm-ruler"]
 )

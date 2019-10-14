@@ -37,6 +37,8 @@ if __name__ == "__main__":
     else:
         DAEMON = MyDaemon('/tmp/dtnrmagent-update.pid')
     if len(sys.argv) > 1:
+        if sys.argv[1] == 'startforeground':
+            CONFIG, LOGGER = getDefaultConfigAgent('Ruler', streamLogger=True)
         DAEMON.command(sys.argv[1], sys.argv[0])
     else:
         DAEMON.command('', sys.argv[0])
