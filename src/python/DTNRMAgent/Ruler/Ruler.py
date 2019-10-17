@@ -91,13 +91,12 @@ class Ruler(object):
 
     def checkResources(self, addition, deltaID):
         if not self.noRules:
+            self.logger.info('Addition info %s' % addition)
             try:
-                print addition
                 self.vInterface.status(addition['hosts'][self.hostname], True)
                 self.logger.debug('Resources are up and ok.')
             except:
                 self.logger.debug('State is active, but resources are not. Re-starting')
-                print addition
                 addition['uid'] = deltaID
                 addition = self.vlanCheck(addition)
                 self.logger.info("Applying virtual interface rules. STATUS Failed")
@@ -113,11 +112,11 @@ class Ruler(object):
         addition['uid'] = deltaID
         if os.path.isfile(newvlanFile):
             if not self.noRules:
-                self.logger.info("Removing virtual interface rules")
+                self.logger.info("Removing virtual interface rules file. Add it again by call from FE")
                 self.vInterface.stop(addition['hosts'][self.hostname])
                 self.vInterface.remove(addition['hosts'][self.hostname])
             os.unlink(newvlanFile)
-            return False, "This delta was already on the system. Cancel it."
+            #return True, "This delta was already on the system. Cancel it."
         if self.hostname not in addition['hosts'].keys():
             return False, "Failed to find own hostname in dictionary"
         addition = self.vlanCheck(addition)
@@ -202,12 +201,20 @@ class Ruler(object):
                 raise Exception('This should not happen. Host not allowed to have reduction set.')
             deltaInfo[0]['addition'] = evaldict(deltaInfo[0]['addition'])
             if deltaInfo[0]['state'] in ['activating', 'activated']:
+                self.logger.info('Activating delta %s' % state['deltaid'])
+                if not deltaInfo[0]['addition']:
+                    self.logger.info('Failing delta %s. No addition parsed' % state['deltaid'])
+                    self.logger.info(deltaInfo[0])
+                    #self.setHostState('failed', state['deltaid'])
+                    continue
                 outExit, message = self.activateResources(deltaInfo[0]['addition'], state['deltaid'])
+                self.logger.info(deltaInfo[0])
                 if outExit:
                     self.setHostState('active', state['deltaid'])
                 else:
                     # TODO. Have ability to save message in Frontend.
                     print 'we should change state to failed', outExit, message
+                    self.logger.info('Adding resources failed. Setting Host State to Failed Exit: %s, Message %s' % (outExit, message))
                     self.setHostState('failed', state['deltaid'])
             elif deltaInfo[0]['state'] in ['remove', 'removing', 'cancel', 'failed']:
                 outExit, message = self.cancelResources(deltaInfo[0]['addition'], state['deltaid'])
