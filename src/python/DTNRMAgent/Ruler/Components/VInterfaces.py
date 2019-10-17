@@ -36,49 +36,113 @@ class VInterfaces(object):
         self.config = config
         self.logger = logger
 
+    def __identifyL23(self, addition):
+        if 'routes' in addition.keys():
+            return 'L3'
+        return 'L2'
+
     def add(self, vlan, raiseError=False):
         """ Add specific vlan """
-        self.logger.info('Called VInterface add for %s' % str(vlan))
-        command = "ip link add link %s name %s.%s type vlan id %s" % (vlan['destport'],
-                                                                      vlan['destport'],
-                                                                      vlan['vlan'],
-                                                                      vlan['vlan'])
-        return execute(command, self.logger, raiseError)
+        level = self.__identifyL23(vlan)
+        if level == 'L2':
+            self.logger.info('Called VInterface add L2 for %s' % str(vlan))
+            command = "ip link add link %s name %s.%s type vlan id %s" % (vlan['destport'],
+                                                                          vlan['destport'],
+                                                                          vlan['vlan'],
+                                                                          vlan['vlan'])
+            return execute(command, self.logger, raiseError)
+        if level == 'L3':
+            self.logger.info('Called VInterface add L3 for %s' % str(vlan))
+            return None
 
     def setup(self, vlan, raiseError=False):
         """ Setup vlan """
-        if 'ip' in vlan.keys():
-            self.logger.info('Called VInterface setup for %s' % str(vlan))
-            command = "ip addr add %s broadcast %s dev %s.%s" % (vlan['ip'], getBroadCast(vlan['ip'], self.logger),
-                                                                 vlan['destport'], vlan['vlan'])
-            return execute(command, self.logger, raiseError)
-        else:
-            self.logger.info('Called VInterface setup for %s, but ip key is not present.' % str(vlan))
-            self.logger.info('Continue as nothing happened')
+        level = self.__identifyL23(vlan)
+        if level == 'L2':
+            if 'ip' in vlan.keys():
+                self.logger.info('Called VInterface setup L2 for %s' % str(vlan))
+                command = "ip addr add %s broadcast %s dev %s.%s" % (vlan['ip'], getBroadCast(vlan['ip'], self.logger),
+                                                                     vlan['destport'], vlan['vlan'])
+                return execute(command, self.logger, raiseError)
+            else:
+                self.logger.info('Called VInterface setup for %s, but ip key is not present.' % str(vlan))
+                self.logger.info('Continue as nothing happened')
+        if level == 'L3':
+            self.logger.info('Called VInterface setup L3 for %s' % str(vlan))
+            return None
+        return None
 
     def start(self, vlan, raiseError=False):
         """ Start specific vlan """
-        self.logger.info('Called VInterface start for %s' % str(vlan))
-        command = "ip link set %s.%s up" % (vlan['destport'], vlan['vlan'])
-        return execute(command, self.logger, raiseError)
+        level = self.__identifyL23(vlan)
+        if level == 'L2':
+            self.logger.info('Called VInterface start L2 for %s' % str(vlan))
+            command = "ip link set %s.%s up" % (vlan['destport'], vlan['vlan'])
+            return execute(command, self.logger, raiseError)
+        if level == 'L3':
+            self.logger.info('Called VInterface start L3 for %s' % str(vlan))
+            route = {}
+            # So far we are only considering one route and mainly routeTo
+            # TODO: In the future we should also have routeFrom implmented.
+            for routel in vlan['routes']:
+                if 'routeTo' in routel.keys() and 'nextHop' in routel.keys():
+                    route = routel
+            if route:
+                command = "ip route add %s via %s" % (route['routeTo']['value'], route['nextHop']['value'].split('/')[0])
+                return execute(command, self.logger, raiseError)
+        return None
 
     def stop(self, vlan, raiseError=False):
         """ Stop specific vlan """
-        self.logger.info('Called VInterface stop for %s' % str(vlan))
-        command = "ip link set %s.%s down" % (vlan['destport'], vlan['vlan'])
-        return execute(command, self.logger, raiseError)
+        level = self.__identifyL23(vlan)
+        if level == 'L2':
+            self.logger.info('Called VInterface L2 stop for %s' % str(vlan))
+            command = "ip link set %s.%s down" % (vlan['destport'], vlan['vlan'])
+            return execute(command, self.logger, raiseError)
+        if level == 'L3':
+            self.logger.info('Called VInterface stop L3 for %s' % str(vlan))
+            return None
+        return None
 
     def remove(self, vlan, raiseError=False):
         """ Remove specific vlan """
-        self.logger.info('Called VInterface remove for %s' % str(vlan))
-        command = "ip link delete %s.%s" % (vlan['destport'], vlan['vlan'])
-        return execute(command, self.logger, raiseError)
+        level = self.__identifyL23(vlan)
+        if level == 'L2':
+            self.logger.info('Called VInterface remove for %s' % str(vlan))
+            command = "ip link delete %s.%s" % (vlan['destport'], vlan['vlan'])
+            return execute(command, self.logger, raiseError)
+        if level == 'L3':
+            self.logger.info('Called VInterface remove L3 for %s' % str(vlan))
+            route = {}
+            # So far we are only considering one route and mainly routeTo
+            # TODO: In the future we should also have routeFrom implmented.
+            for routel in vlan['routes']:
+                if 'routeTo' in routel.keys() and 'nextHop' in routel.keys():
+                    route = routel
+            if route:
+                command = "ip route del %s via %s" % (route['routeTo']['value'], route['nextHop']['value'].split('/')[0])
+                return execute(command, self.logger, raiseError)
+        return None
 
     def status(self, vlan, raiseError=False):
         """ Get status of specific vlan """
-        self.logger.info('Called VInterface status for %s' % str(vlan))
-        command = "ip link show dev %s.%s" % (vlan['destport'], vlan['vlan'])
-        return execute(command, self.logger, raiseError)
+        level = self.__identifyL23(vlan)
+        if level == 'L2':
+            self.logger.info('Called VInterface status for %s' % str(vlan))
+            command = "ip link show dev %s.%s" % (vlan['destport'], vlan['vlan'])
+            return execute(command, self.logger, raiseError)
+        if level == 'L3':
+            self.logger.info('Called VInterface status L3 for %s' % str(vlan))
+            route = {}
+            # So far we are only considering one route and mainly routeTo
+            # TODO: In the future we should also have routeFrom implmented.
+            for routel in vlan['routes']:
+                if 'routeTo' in routel.keys() and 'nextHop' in routel.keys():
+                    route = routel
+            if route:
+                command = "ip route get %s" % (route['routeTo']['value'])
+                return execute(command, self.logger, raiseError)
+        return None
 
 if __name__ == '__main__':
-    print 'This has to be called through main Ruler component'
+    print 'This has to be called through main Ruler component. Not supported direct call'

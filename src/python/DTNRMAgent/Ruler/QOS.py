@@ -109,6 +109,9 @@ class QOS(object):
                 inputName = "%s%sIn" % (inputDict['destport'], inputDict['vlan'])
                 outputName = "%s%sOut" % (inputDict['destport'], inputDict['vlan'])
                 params = inputDict['params'][0]
+                if not params:
+                    self.logger.info('This specific vlan request did not provided any QOS. Ignoring QOS Rules for it')
+                    continue
                 outrate, outtype = convertToRate(params['unit'], int(params['reservableCapacity']), self.logger)
                 tmpFile.write("# SPEEDLIMIT %s %s %s %s\n" % (inputDict['vlan'],
                                                               inputDict['destport'],
