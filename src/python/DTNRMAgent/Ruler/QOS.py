@@ -106,6 +106,9 @@ class QOS(object):
                 inputDict = inputDict[u'hosts'][self.hostname]
                 # ['hosts'][self.hostname]
                 self.logger.info("File %s content %s" % (fileName, inputDict))
+                if 'routes' in inputDict.keys():
+                    self.logger.info('This is L3 definition. Ignore QOS. Todo for future based on source/dest')
+                    continue
                 inputName = "%s%sIn" % (inputDict['destport'], inputDict['vlan'])
                 outputName = "%s%sOut" % (inputDict['destport'], inputDict['vlan'])
                 params = inputDict['params'][0]
