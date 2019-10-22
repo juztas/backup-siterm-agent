@@ -81,15 +81,10 @@ class VInterfaces(object):
             return execute(command, self.logger, raiseError)
         if level == 'L3':
             self.logger.info('Called VInterface start L3 for %s' % str(vlan))
-            route = {}
-            # So far we are only considering one route and mainly routeTo
-            # TODO: In the future we should also have routeFrom implmented.
             for routel in vlan['routes']:
                 if 'routeTo' in routel.keys() and 'nextHop' in routel.keys():
-                    route = routel
-            if route:
-                command = "ip route add %s via %s" % (route['routeTo']['value'], route['nextHop']['value'].split('/')[0])
-                return execute(command, self.logger, raiseError)
+                    command = "ip route add %s via %s" % (routel['routeTo']['value'], routel['nextHop']['value'].split('/')[0])
+                    execute(command, self.logger, raiseError)
         return None
 
     def stop(self, vlan, raiseError=False):
@@ -113,15 +108,10 @@ class VInterfaces(object):
             return execute(command, self.logger, raiseError)
         if level == 'L3':
             self.logger.info('Called VInterface remove L3 for %s' % str(vlan))
-            route = {}
-            # So far we are only considering one route and mainly routeTo
-            # TODO: In the future we should also have routeFrom implmented.
             for routel in vlan['routes']:
                 if 'routeTo' in routel.keys() and 'nextHop' in routel.keys():
-                    route = routel
-            if route:
-                command = "ip route del %s via %s" % (route['routeTo']['value'], route['nextHop']['value'].split('/')[0])
-                return execute(command, self.logger, raiseError)
+                    command = "ip route del %s via %s" % (routel['routeTo']['value'], routel['nextHop']['value'].split('/')[0])
+                    execute(command, self.logger, raiseError)
         return None
 
     def status(self, vlan, raiseError=False):
@@ -133,15 +123,10 @@ class VInterfaces(object):
             return execute(command, self.logger, raiseError)
         if level == 'L3':
             self.logger.info('Called VInterface status L3 for %s' % str(vlan))
-            route = {}
-            # So far we are only considering one route and mainly routeTo
-            # TODO: In the future we should also have routeFrom implmented.
             for routel in vlan['routes']:
                 if 'routeTo' in routel.keys() and 'nextHop' in routel.keys():
-                    route = routel
-            if route:
-                command = "ip route get %s" % (route['routeTo']['value'])
-                return execute(command, self.logger, raiseError)
+                    command = "ip route get %s" % (routel['routeTo']['value'])
+                    execute(command, self.logger, raiseError)
         return None
 
 if __name__ == '__main__':
