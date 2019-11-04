@@ -85,6 +85,8 @@ class VInterfaces(object):
                 if 'routeTo' in routel.keys() and 'nextHop' in routel.keys():
                     command = "ip route add %s via %s" % (routel['routeTo']['value'], routel['nextHop']['value'].split('/')[0])
                     execute(command, self.logger, raiseError)
+                else:
+                    self.logger.info('Parsed delta did not had routeTo or nextHop keys in route info. Route details: %s' % routel)
         return None
 
     def stop(self, vlan, raiseError=False):
@@ -112,6 +114,8 @@ class VInterfaces(object):
                 if 'routeTo' in routel.keys() and 'nextHop' in routel.keys():
                     command = "ip route del %s via %s" % (routel['routeTo']['value'], routel['nextHop']['value'].split('/')[0])
                     execute(command, self.logger, raiseError)
+                else:
+                    self.logger.info('Parsed delta did not had routeTo or nextHop keys in route info. Route details: %s' % routel)
         return None
 
     def status(self, vlan, raiseError=False):
@@ -127,6 +131,8 @@ class VInterfaces(object):
                 if 'routeTo' in routel.keys() and 'nextHop' in routel.keys():
                     command = "ip route get %s" % (routel['routeTo']['value'])
                     execute(command, self.logger, raiseError)
+                else:
+                    self.logger.info('Parsed delta did not had routeTo or nextHop keys in route info. Route details: %s' % routel)
         return None
 
 if __name__ == '__main__':
