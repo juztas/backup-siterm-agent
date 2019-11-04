@@ -83,8 +83,9 @@ class VInterfaces(object):
             self.logger.info('Called VInterface start L3 for %s' % str(vlan))
             for routel in vlan['routes']:
                 if 'routeTo' in routel.keys() and 'nextHop' in routel.keys():
-                    command = "ip route add %s via %s" % (routel['routeTo']['value'], routel['nextHop']['value'].split('/')[0])
-                    execute(command, self.logger, raiseError)
+                    if 'value' in routel['routeTo'].keys() and 'value' in routel['nextHop'].keys():
+                        command = "ip route add %s via %s" % (routel['routeTo']['value'], routel['nextHop']['value'].split('/')[0])
+                        execute(command, self.logger, raiseError)
                 else:
                     self.logger.info('Parsed delta did not had routeTo or nextHop keys in route info. Route details: %s' % routel)
         return None
@@ -112,8 +113,9 @@ class VInterfaces(object):
             self.logger.info('Called VInterface remove L3 for %s' % str(vlan))
             for routel in vlan['routes']:
                 if 'routeTo' in routel.keys() and 'nextHop' in routel.keys():
-                    command = "ip route del %s via %s" % (routel['routeTo']['value'], routel['nextHop']['value'].split('/')[0])
-                    execute(command, self.logger, raiseError)
+                    if 'value' in routel['routeTo'].keys() and 'value' in routel['nextHop'].keys():
+                        command = "ip route del %s via %s" % (routel['routeTo']['value'], routel['nextHop']['value'].split('/')[0])
+                        execute(command, self.logger, raiseError)
                 else:
                     self.logger.info('Parsed delta did not had routeTo or nextHop keys in route info. Route details: %s' % routel)
         return None
@@ -129,8 +131,9 @@ class VInterfaces(object):
             self.logger.info('Called VInterface status L3 for %s' % str(vlan))
             for routel in vlan['routes']:
                 if 'routeTo' in routel.keys() and 'nextHop' in routel.keys():
-                    command = "ip route get %s" % (routel['routeTo']['value'])
-                    execute(command, self.logger, raiseError)
+                    if 'value' in routel['routeTo'].keys() and 'value' in routel['nextHop'].keys():
+                        command = "ip route get %s" % (routel['routeTo']['value'])
+                        execute(command, self.logger, raiseError)
                 else:
                     self.logger.info('Parsed delta did not had routeTo or nextHop keys in route info. Route details: %s' % routel)
         return None
