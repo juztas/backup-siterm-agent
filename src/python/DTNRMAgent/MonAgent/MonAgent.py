@@ -57,18 +57,11 @@ def getNetdataConfig():
             return False, {}
     tempfileName = fd.name
     hostConfig = getConfig([tempfileName])
-    if not hostConfig.has_section('backend'):
-        print 'Netdata server is not configured to publish anything to any backend'
-        print '* Skipping this node check.'
-        return False, {}
-    if not hostConfig.has_option('backend', 'enabled'):
-        print 'Netdata does not have enabled option in backend configuration'
-        print '* Skipping this node check.'
-        return False, {}
-    if not hostConfig.has_option('backend', 'destination'):
-        print 'Netdata is configured to send metrics but destination is not set.'
-        print '* Skipping this node check.'
-        return False, {}
+    for option in ['enabled', 'destination']:
+        if not hostConfig.has_option('backend', option):
+            print 'Netdata server is not configured to publish anything to any backend'
+            print '* Skipping this node check.'
+            return False, {}
     for optionKey in hostConfig.options('backend'):
         outDict[optionKey] = hostConfig.get('backend', optionKey)
     # Make boolean from send names instead of ids
@@ -129,27 +122,18 @@ def execute(configIn=None, loggerIn=None):
     for _interf, interfDict in agentOut['NetInfo'].items():
         if 'vlan_range' in interfDict:
             lowR, highR = interfDict['vlan_range'].split(',')
-            total = int(highR) - int(lowR)
-            if total < 0:
-                # TODO print error
-                out['sense.agentError'] += 1
-            else:
-                out['sense.vlansTotal'] += total
+            out['sense.agentError'] += 1 if int(int(highR) - int(lowR)) < 0 else 0
+            out['sense.vlansTotal'] += int(int(highR) - int(lowR))
         out['sense.vlansInUse'] = len(interfDict['vlans'])
-    free = out['sense.vlansTotal'] - out['sense.vlansInUse']
-    if free < 0:
-        # TODO: print error
-        out['sense.agentError'] += 1
-    else:
-        out['sense.vlansFree'] = free
+    out['sense.agentError'] += 1 if int(out['sense.vlansTotal'] - out['sense.vlansInUse']) < 0 else 0
+    out['sense.vlansFree'] = int(out['sense.vlansTotal'] - out['sense.vlansInUse'])
     if 'destination' in outConfig:
-        splVal = outConfig['destination'].split(':')
-        if len(splVal) == 3:
-            destHostname = splVal[1]
-            destPort = splVal[2]
-        elif len(splVal) == 2:
-            destHostname = splVal[0]
-            destPort = splVal[1]
+        if len(outConfig['destination'].split(':')) == 3:
+            destHostname = outConfig['destination'].split(':')[1]
+            destPort = outConfig['destination'].split(':')[2]
+        elif len(outConfig['destination'].split(':')) == 2:
+            destHostname = outConfig['destination'].split(':')[0]
+            destPort = outConfig['destination'].split(':')[1]
         else:
             print 'FAILURE. Was expecting protocol:ip:port or ip:port... Got Value: %s' % outConfig['destination']
             return

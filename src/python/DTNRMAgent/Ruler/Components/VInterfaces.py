@@ -23,6 +23,7 @@ Date			: 2017/09/26
 import ipaddress
 from DTNRMLibs.MainUtilities import execute
 
+
 def getBroadCast(inIP, logger):
     """ Return broadcast IP """
     logger.info('Getting boardcast IP info')
@@ -30,35 +31,31 @@ def getBroadCast(inIP, logger):
     logger.info('Broadcast for %s is set to %s' % (inIP, str(my_net.broadcast_address)))
     return str(my_net.broadcast_address)
 
+
+def identifyL23(addition):
+    return 'L3' if 'routes' in addition.keys() else 'L2'
+
+
 class VInterfaces(object):
     """ Virtual interface class """
     def __init__(self, config, logger):
         self.config = config
         self.logger = logger
 
-    def __identifyL23(self, addition):
-        if 'routes' in addition.keys():
-            return 'L3'
-        return 'L2'
-
     def add(self, vlan, raiseError=False):
         """ Add specific vlan """
-        level = self.__identifyL23(vlan)
-        if level == 'L2':
+        if identifyL23(vlan) == 'L2':
             self.logger.info('Called VInterface add L2 for %s' % str(vlan))
             command = "ip link add link %s name %s.%s type vlan id %s" % (vlan['destport'],
                                                                           vlan['destport'],
                                                                           vlan['vlan'],
                                                                           vlan['vlan'])
             return execute(command, self.logger, raiseError)
-        if level == 'L3':
-            self.logger.info('Called VInterface add L3 for %s' % str(vlan))
-            return None
+        return None
 
     def setup(self, vlan, raiseError=False):
         """ Setup vlan """
-        level = self.__identifyL23(vlan)
-        if level == 'L2':
+        if identifyL23(vlan) == 'L2':
             if 'ip' in vlan.keys():
                 self.logger.info('Called VInterface setup L2 for %s' % str(vlan))
                 command = "ip addr add %s broadcast %s dev %s.%s" % (vlan['ip'], getBroadCast(vlan['ip'], self.logger),
@@ -67,67 +64,61 @@ class VInterfaces(object):
             else:
                 self.logger.info('Called VInterface setup for %s, but ip key is not present.' % str(vlan))
                 self.logger.info('Continue as nothing happened')
-        if level == 'L3':
-            self.logger.info('Called VInterface setup L3 for %s' % str(vlan))
-            return None
         return None
 
     def start(self, vlan, raiseError=False):
         """ Start specific vlan """
-        level = self.__identifyL23(vlan)
-        if level == 'L2':
+        if identifyL23(vlan) == 'L2':
             self.logger.info('Called VInterface start L2 for %s' % str(vlan))
             command = "ip link set %s.%s up" % (vlan['destport'], vlan['vlan'])
             return execute(command, self.logger, raiseError)
-        if level == 'L3':
+        else:
             self.logger.info('Called VInterface start L3 for %s' % str(vlan))
             for routel in vlan['routes']:
                 if 'routeTo' in routel.keys() and 'nextHop' in routel.keys():
                     if 'value' in routel['routeTo'].keys() and 'value' in routel['nextHop'].keys():
-                        command = "ip route add %s via %s" % (routel['routeTo']['value'], routel['nextHop']['value'].split('/')[0])
+                        command = "ip route add %s via %s" % (routel['routeTo']['value'],
+                                                              routel['nextHop']['value'].split('/')[0])
                         execute(command, self.logger, raiseError)
                 else:
-                    self.logger.info('Parsed delta did not had routeTo or nextHop keys in route info. Route details: %s' % routel)
+                    self.logger.info('Parsed delta did not had routeTo or nextHop keys in route info. Route details: %s'
+                                     % routel)
         return None
 
     def stop(self, vlan, raiseError=False):
         """ Stop specific vlan """
-        level = self.__identifyL23(vlan)
-        if level == 'L2':
+        if identifyL23(vlan) == 'L2':
             self.logger.info('Called VInterface L2 stop for %s' % str(vlan))
             command = "ip link set %s.%s down" % (vlan['destport'], vlan['vlan'])
             return execute(command, self.logger, raiseError)
-        if level == 'L3':
-            self.logger.info('Called VInterface stop L3 for %s' % str(vlan))
-            return None
         return None
 
     def remove(self, vlan, raiseError=False):
         """ Remove specific vlan """
-        level = self.__identifyL23(vlan)
-        if level == 'L2':
+        if identifyL23(vlan) == 'L2':
             self.logger.info('Called VInterface remove for %s' % str(vlan))
             command = "ip link delete %s.%s" % (vlan['destport'], vlan['vlan'])
             return execute(command, self.logger, raiseError)
-        if level == 'L3':
+        else:
             self.logger.info('Called VInterface remove L3 for %s' % str(vlan))
             for routel in vlan['routes']:
                 if 'routeTo' in routel.keys() and 'nextHop' in routel.keys():
                     if 'value' in routel['routeTo'].keys() and 'value' in routel['nextHop'].keys():
-                        command = "ip route del %s via %s" % (routel['routeTo']['value'], routel['nextHop']['value'].split('/')[0])
+                        command = "ip route del %s via %s" % (routel['routeTo']['value'],
+                                                              routel['nextHop']['value'].split('/')[0])
                         execute(command, self.logger, raiseError)
                 else:
-                    self.logger.info('Parsed delta did not had routeTo or nextHop keys in route info. Route details: %s' % routel)
+                    self.logger.info('Parsed delta did not had routeTo or nextHop keys in route info. Route details: %s'
+                                     % routel)
         return None
 
     def status(self, vlan, raiseError=False):
         """ Get status of specific vlan """
-        level = self.__identifyL23(vlan)
-        if level == 'L2':
+        if identifyL23(vlan) == 'L2':
             self.logger.info('Called VInterface status for %s' % str(vlan))
             command = "ip link show dev %s.%s" % (vlan['destport'], vlan['vlan'])
             return execute(command, self.logger, raiseError)
-        if level == 'L3':
+        else:
             self.logger.info('Called VInterface status L3 for %s' % str(vlan))
             for routel in vlan['routes']:
                 if 'routeTo' in routel.keys() and 'nextHop' in routel.keys():
@@ -135,7 +126,8 @@ class VInterfaces(object):
                         command = "ip route get %s" % (routel['routeTo']['value'])
                         execute(command, self.logger, raiseError)
                 else:
-                    self.logger.info('Parsed delta did not had routeTo or nextHop keys in route info. Route details: %s' % routel)
+                    self.logger.info('Parsed delta did not had routeTo or nextHop keys in route info. Route details: %s'
+                                     % routel)
         return None
 
 if __name__ == '__main__':

@@ -24,7 +24,7 @@ class MyDaemon(Daemon):
             time.sleep(5)
             try:
                 rulerAgent.start()
-            except:
+            except Exception:
                 LOGGER.info('There was uncaught exception')
                 excType, excValue = sys.exc_info()[:2]
                 LOGGER.critical("Error details. ErrorType: %s, ErrMsg: %s" % (str(excType.__name__), excValue))

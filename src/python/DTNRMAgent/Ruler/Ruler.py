@@ -30,6 +30,7 @@ from Components.VInterfaces import VInterfaces
 
 COMPONENT = 'Ruler'
 
+
 class Ruler(object):
     """ Ruler class to create interfaces on the system """
     def __init__(self, config, logger):
@@ -37,16 +38,10 @@ class Ruler(object):
         self.workDir = self.config.get('general', 'private_dir') + "/DTNRM/RulerAgent/"
         createDirs(self.workDir)
         self.fullURL = getFullUrl(self.config, self.config.get('general', 'siteName'))
-        self.noRules = False
-        if self.config.has_option('agent', 'norules'):
-            self.noRules = self.config.getboolean('agent', 'norules')
+        self.noRules = self.config.getboolean('agent', 'norules')
         self.hostname = self.config.get('agent', 'hostname')
         self.logger.info("====== Ruler Start Work. Hostname: %s", self.hostname)
-        self.debug = self.config.getboolean('general', "debug")
-        self.pretty = pprint.PrettyPrinter(indent=4)
-        self.agentdb = contentDB(logger=self.logger, config=self.config)
         self.vInterface = VInterfaces(self.config, self.logger)
-        self.qosruler = QOS(self.config, self.logger)
 
     def getData(self, url):
         """ Get data from FE """
@@ -56,8 +51,9 @@ class Ruler(object):
             msg = 'Received a failure getting information from Site Frontend %s' % str(out)
             self.logger.critical(msg)
             return {}
-        if self.debug:
-            self.pretty.pprint(evaldict(out[0]))
+        if self.config.getboolean('general', "debug"):
+            pretty = pprint.PrettyPrinter(indent=4)
+            pretty.pprint(evaldict(out[0]))
         self.logger.info('End function checkdeltas')
         return evaldict(out[0])
 
@@ -90,12 +86,13 @@ class Ruler(object):
         return addition
 
     def checkResources(self, addition, deltaID):
+        """ Check if IP, interfaces, routes are in place. if not, add's it. """
         if not self.noRules:
             self.logger.info('Addition info %s' % addition)
             try:
                 self.vInterface.status(addition['hosts'][self.hostname], True)
                 self.logger.debug('Resources are up and ok.')
-            except Exception:
+            except FailedInterfaceCommand:
                 self.logger.debug('State is active, but resources are not. Re-starting')
                 addition['uid'] = deltaID
                 addition = self.vlanCheck(addition)
@@ -116,12 +113,13 @@ class Ruler(object):
                 self.vInterface.stop(addition['hosts'][self.hostname])
                 self.vInterface.remove(addition['hosts'][self.hostname])
             os.unlink(newvlanFile)
-            #return True, "This delta was already on the system. Cancel it."
+            # return True, "This delta was already on the system. Cancel it."
         if self.hostname not in addition['hosts'].keys():
             return False, "Failed to find own hostname in dictionary"
         addition = self.vlanCheck(addition)
         self.logger.info("Saving file %s", deltaID)
-        self.agentdb.dumpFileContentAsJson(newvlanFile, addition)
+        agentdb = contentDB(logger=self.logger, config=self.config)
+        agentdb.dumpFileContentAsJson(newvlanFile, addition)
         if not self.noRules:
             self.logger.info("Applying virtual interface rules")
             self.vInterface.add(addition['hosts'][self.hostname])
@@ -132,6 +130,7 @@ class Ruler(object):
         return True, ""
 
     def cancelResources(self, addition, deltaID):
+        """Remove resources (Remove interfaces, remove ips, L3 routes) """
         newvlanFile = self.workDir + "/%s.json" % deltaID
         addition['uid'] = deltaID
         if os.path.isfile(newvlanFile):
@@ -151,6 +150,22 @@ class Ruler(object):
         #          a) check host state if not removed, do delta Removal;
         #          b) update state and delete file;
         #          c) if state in failed - remove resources and set state removed; remove file;
+        self.checkAllFiles()
+        self.checkHostStates()
+        self.checkActivatingDeltas()
+        # QoS Rules:
+        # ===========================================================================================
+        if not self.noRules:
+            qosruler = QOS(self.config, self.logger)
+            self.logger.info('Agent is configured to apply QoS rules')
+            qosruler.start()
+        else:
+            self.logger.info('Agent is not configured to apply QoS rules')
+        self.logger.info('Ended function start')
+        return
+
+    def checkAllFiles(self):
+        """Check All deltas active on the host"""
         self.logger.info('Started function start')
         # THIS IS TODO
         for fileName in glob.glob("%s/*.json" % self.workDir):
@@ -170,6 +185,9 @@ class Ruler(object):
             elif deltaInfo[0]['state'] in ['remove', 'removing', 'cancel', 'failed']:
                 self.cancelResources(deltaInfo[0]['addition'], inputDict['uid'])
                 self.setHostState('cancel', inputDict['uid'])
+
+    def checkHostStates(self):
+        """ Check Host State deltas """
         # Checking all active states:
         # ===========================================================================================
         states = self.getHostStates('active')
@@ -188,8 +206,11 @@ class Ruler(object):
                 self.setHostState('cancel', state['deltaid'])
             else:
                 self.logger.info('Weird delta state. Check Frontend for delta %s' % state['deltaid'])
+
         # Checking all which are in activating:
         # ===========================================================================================
+    def checkActivatingDeltas(self):
+        """ Check all deltas in activating states """
         states = self.getHostStates('activating')
         for state in states:
             # Check delta State;
@@ -205,7 +226,7 @@ class Ruler(object):
                 if not deltaInfo[0]['addition']:
                     self.logger.info('Failing delta %s. No addition parsed' % state['deltaid'])
                     self.logger.info(deltaInfo[0])
-                    #self.setHostState('failed', state['deltaid'])
+                    # self.setHostState('failed', state['deltaid'])
                     continue
                 outExit, message = self.activateResources(deltaInfo[0]['addition'], state['deltaid'])
                 self.logger.info(deltaInfo[0])
@@ -214,22 +235,15 @@ class Ruler(object):
                 else:
                     # TODO. Have ability to save message in Frontend.
                     print 'we should change state to failed', outExit, message
-                    self.logger.info('Adding resources failed. Setting Host State to Failed Exit: %s, Message %s' % (outExit, message))
+                    self.logger.info('Adding resources failed. Setting Host State to Failed Exit: %s, Message %s'
+                                     % (outExit, message))
                     self.setHostState('failed', state['deltaid'])
             elif deltaInfo[0]['state'] in ['remove', 'removing', 'cancel', 'failed']:
                 self.cancelResources(deltaInfo[0]['addition'], state['deltaid'])
                 self.setHostState('cancel', state['deltaid'])
             else:
                 self.logger.info('Weird delta state. Check Frontend for delta %s' % state['deltaid'])
-        # QoS Rules:
-        # ===========================================================================================
-        if not self.noRules:
-            self.logger.info('Agent is configured to apply QoS rules')
-            self.qosruler.start()
-        else:
-            self.logger.info('Agent is not configured to apply QoS rules')
-        self.logger.info('Ended function start')
-        return
+
 
 def execute(config=None, logger=None):
     """ Execute main script for DTN-RM Agent output preparation """
