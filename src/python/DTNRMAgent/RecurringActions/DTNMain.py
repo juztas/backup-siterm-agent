@@ -19,7 +19,6 @@ Email 			: justas.balcas (at) cern.ch
 Date			: 2017/09/26
 """
 import sys
-import time
 import pprint
 import importlib
 import Plugins
@@ -102,8 +101,7 @@ def startWork(config=None, logger=None):
     outVals = publishToSiteFE(dic, fullUrl, '/json/frontend/updatehost')
     if outVals[2] != 'OK' or outVals[1] != 200:
         if outVals[3]:
-            dummyOutVals = tuple(outVals)
-            outVals = publishToSiteFE(dic, fullUrl, '/json/frontend/addhost')
+            publishToSiteFE(dic, fullUrl, '/json/frontend/addhost')
 
 def execute(config, logger):
     startWork(config, logger)

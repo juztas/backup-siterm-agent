@@ -67,12 +67,10 @@ def get(config):
     tmpIOCount = psutil.net_io_counters(pernic=True)
     foundInterfaces = []
     for nic, addrs in tmpifAddr.items():
-        if nic.split('.')[0] not in netInfo.keys():
-            nicInfo = netInfo.setdefault(nic.split('.')[0], {'vlans': {}})
         # TODO: Check with configuration of which vlans are provisioned;
         # Currently it is a hack. if it is a vlan, I assume it is provisioned by orchestrator;
         nicSplit = nic.split('.')
-        nicInfo = netInfo.setdefault(nicSplit[0], {})
+        nicInfo = netInfo.setdefault(nicSplit[0], {'vlans': {}})
         if len(nicSplit) == 2:
             nicInfo = nicInfo['vlans'].setdefault(nic, {})
             nicInfo['provisioned'] = True

@@ -95,7 +95,7 @@ class Ruler(object):
             try:
                 self.vInterface.status(addition['hosts'][self.hostname], True)
                 self.logger.debug('Resources are up and ok.')
-            except:
+            except Exception:
                 self.logger.debug('State is active, but resources are not. Re-starting')
                 addition['uid'] = deltaID
                 addition = self.vlanCheck(addition)
@@ -217,7 +217,7 @@ class Ruler(object):
                     self.logger.info('Adding resources failed. Setting Host State to Failed Exit: %s, Message %s' % (outExit, message))
                     self.setHostState('failed', state['deltaid'])
             elif deltaInfo[0]['state'] in ['remove', 'removing', 'cancel', 'failed']:
-                outExit, message = self.cancelResources(deltaInfo[0]['addition'], state['deltaid'])
+                self.cancelResources(deltaInfo[0]['addition'], state['deltaid'])
                 self.setHostState('cancel', state['deltaid'])
             else:
                 self.logger.info('Weird delta state. Check Frontend for delta %s' % state['deltaid'])

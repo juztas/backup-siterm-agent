@@ -26,7 +26,7 @@ Date			: 2017/09/26
 """
 import pprint
 from DTNRMAgent.RecurringActions.Utilities import externalCommand, tryConvertToNumeric
-from DTNRMLibs.MainUtilities import getValueFromConfig, getConfig
+from DTNRMLibs.MainUtilities import getConfig
 
 NAME = 'CPUInfo'
 
@@ -46,7 +46,7 @@ def get(config):
     if 'Socket(s)' in cpuInfo and 'Core(s) per socket':
         try:
             cpuInfo['num_cores'] = int(cpuInfo['Socket(s)']) * int(cpuInfo['Core(s) per socket'])
-        except:
+        except Exception:
             print 'Failed to calculate num_cores from %s. will set to 1' % cpuInfo
     return cpuInfo
 

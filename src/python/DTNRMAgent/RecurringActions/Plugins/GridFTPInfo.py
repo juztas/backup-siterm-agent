@@ -21,7 +21,7 @@ Date			: 2017/09/26
 import os.path
 import pprint
 from DTNRMAgent.RecurringActions.Utilities import externalCommand, tryConvertToNumeric, runPipedCmd, getProcInfo
-from DTNRMLibs.MainUtilities import getValueFromConfig, getConfig
+from DTNRMLibs.MainUtilities import getConfig
 
 NAME = 'GridFTPInfo'
 IGNORE_USERS = ['root']

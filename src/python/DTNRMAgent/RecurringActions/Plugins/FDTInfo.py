@@ -19,7 +19,7 @@ Email 			: justas.balcas (at) cern.ch
 Date			: 2017/09/26
 """
 import pprint
-from DTNRMLibs.MainUtilities import getValueFromConfig, getConfig
+from DTNRMLibs.MainUtilities import getConfig
 
 NAME = 'FDTInfo'
 

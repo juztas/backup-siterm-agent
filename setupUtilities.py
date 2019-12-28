@@ -23,14 +23,11 @@ import sys
 import platform
 import ConfigParser
 
-import platform
-import sys
-
 def linuxDistr():
     """ Return linux distribution name. Otherwise Unknown """
     try:
         return platform.linux_distribution()
-    except:
+    except Exception:
         return "Unknown"
 
 def printInfo(logger=None):
@@ -45,7 +42,7 @@ def printInfo(logger=None):
     print "Platform: %s" % platform.platform()
     print 'Uname: %s' % platform.uname()
     print 'Version: %s' % platform.version()
-    print 'Mac version: %s' % platform.mac_ver()
+    print 'Mac version: %s %s %s' % platform.mac_ver()
 
 
 def get_path_to_root(appendLocation=None):
